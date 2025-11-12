@@ -50,13 +50,6 @@ public class ResumeService {
                 .toList();
     }
 
-<<<<<<< HEAD
-
-=======
-    // ===== NEW METHODS (ADD THESE) =====
-
-    // Get all resumes for dashboard (returns full Resume objects)
->>>>>>> c5633a559802cdd7da40a63a27008bf59dc9e067
     public List<Resume> getResumesByUserId(Long userId) {
         return resumeRepo.findByUserIdOrderByUpdatedAtDesc(userId);
     }
