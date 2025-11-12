@@ -1,21 +1,15 @@
 package org.example.resai.controller;
 
 import lombok.RequiredArgsConstructor;
-<<<<<<< HEAD
 import org.example.resai.dto.ResumeReq;
 import org.example.resai.dto.ResumeRes;
-=======
->>>>>>> c5633a559802cdd7da40a63a27008bf59dc9e067
 import org.example.resai.model.Resume;
 import org.example.resai.model.User;
 import org.example.resai.security.JwtUtils;
 import org.example.resai.service.ResumeService;
 import org.example.resai.service.UserService;
 import org.springframework.http.ResponseEntity;
-<<<<<<< HEAD
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-=======
->>>>>>> c5633a559802cdd7da40a63a27008bf59dc9e067
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -39,7 +33,6 @@ public class ResumeController {
         return userService.findByEmail(email);
     }
 
-<<<<<<< HEAD
 
     @PostMapping("/create")
     public ResponseEntity<ResumeRes> create(@RequestBody ResumeReq dto, @AuthenticationPrincipal User user) {
@@ -47,8 +40,6 @@ public class ResumeController {
         return ResponseEntity.ok(createdResume);
     }
 
-=======
->>>>>>> c5633a559802cdd7da40a63a27008bf59dc9e067
     // Get all resumes for the authenticated user
     @GetMapping
     public ResponseEntity<?> getAllResumes(@RequestHeader("Authorization") String authHeader) {
