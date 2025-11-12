@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -17,6 +18,7 @@ public class JwtUtils {
 
     private final Key key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
 
+    // Generate JWT token
     public String generateToken(String email) {
         return Jwts.builder()
                 .setSubject(email)
@@ -26,14 +28,16 @@ public class JwtUtils {
                 .compact();
     }
 
+    // Extract email safely
     public String extractEmail(String token) {
         return extractAllClaims(token).getSubject();
     }
 
-    public boolean isTokenValid(String token) {
+    // Validate token
+    public boolean isTokenValid(String token, UserDetails userDetails) {
         try {
-            extractAllClaims(token);
-            return true;
+            String email = extractEmail(token);
+            return email.equals(userDetails.getUsername()) && !isTokenExpired(token);
         } catch (Exception e) {
             return false;
         }
@@ -45,5 +49,9 @@ public class JwtUtils {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    private boolean isTokenExpired(String token) {
+        return extractAllClaims(token).getExpiration().before(new Date());
     }
 }
