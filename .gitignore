@@ -1,12 +1,16 @@
+<<<<<<< HEAD
 # -------------------------------------------------------------------
 # SPRING BOOT / MAVEN
 # -------------------------------------------------------------------
+=======
+>>>>>>> c5633a559802cdd7da40a63a27008bf59dc9e067
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+<<<<<<< HEAD
 # -------------------------------------------------------------------
 # NEXT.JS / NODE
 # -------------------------------------------------------------------
@@ -35,6 +39,8 @@ application-local.properties
 # -------------------------------------------------------------------
 # IDE & OS FILES
 # -------------------------------------------------------------------
+=======
+>>>>>>> c5633a559802cdd7da40a63a27008bf59dc9e067
 ### STS ###
 .apt_generated
 .classpath
@@ -43,6 +49,10 @@ application-local.properties
 .settings
 .springBeans
 .sts4-cache
+<<<<<<< HEAD
+=======
+.env
+>>>>>>> c5633a559802cdd7da40a63a27008bf59dc9e067
 
 ### IntelliJ IDEA ###
 .idea
@@ -62,7 +72,10 @@ build/
 
 ### VS Code ###
 .vscode/
+<<<<<<< HEAD
 
 # OS generated files
 .DS_Store
 Thumbs.db
+=======
+>>>>>>> c5633a559802cdd7da40a63a27008bf59dc9e067
