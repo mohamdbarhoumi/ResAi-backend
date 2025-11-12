@@ -1,12 +1,15 @@
 package org.example.resai.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.resai.dto.ResumeReq;
+import org.example.resai.dto.ResumeRes;
 import org.example.resai.model.Resume;
 import org.example.resai.model.User;
 import org.example.resai.security.JwtUtils;
 import org.example.resai.service.ResumeService;
 import org.example.resai.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -28,6 +31,13 @@ public class ResumeController {
         String token = authHeader.substring(7); // Remove "Bearer "
         String email = jwtUtils.extractEmail(token);
         return userService.findByEmail(email);
+    }
+
+
+    @PostMapping("/create")
+    public ResponseEntity<ResumeRes> create(@RequestBody ResumeReq dto, @AuthenticationPrincipal User user) {
+        ResumeRes createdResume = resumeService.createResume(user, dto);
+        return ResponseEntity.ok(createdResume);
     }
 
     // Get all resumes for the authenticated user
