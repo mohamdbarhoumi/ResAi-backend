@@ -29,6 +29,8 @@ target/
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
-
+# ... other ignored files
+# Ignore local secrets file
+application-local.properties
 ### VS Code ###
 .vscode/
