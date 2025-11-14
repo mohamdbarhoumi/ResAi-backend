@@ -14,4 +14,5 @@ import java.util.Map;
 public class AiRequest {
     private String userInput;
     private Map<String, String> context;
+    private String language; // NEW: "en" or "fr"
 }

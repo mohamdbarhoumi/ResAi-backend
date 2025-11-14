@@ -3,10 +3,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.example.resai.model.User;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -38,6 +36,9 @@ public class Resume {
 
     @Column(nullable = false)
     private int version = 1;
+
+    @Column(length = 5)
+    private String language = "en";
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

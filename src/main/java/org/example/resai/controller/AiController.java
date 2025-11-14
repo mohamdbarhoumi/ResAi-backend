@@ -6,7 +6,6 @@ import org.example.resai.dto.AiResponse;
 import org.example.resai.model.User;
 import org.example.resai.security.JwtUtils;
 import org.example.resai.service.AiService;
-import org.example.resai.service.AiService;
 import org.example.resai.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,16 +22,12 @@ public class AiController {
     private final UserService userService;
     private final JwtUtils jwtUtils;
 
-    // Helper method to extract user from token
     private User getUserFromToken(String authHeader) {
-        String token = authHeader.substring(7); // Remove "Bearer "
+        String token = authHeader.substring(7);
         String email = jwtUtils.extractEmail(token);
         return userService.findByEmail(email);
     }
 
-    /**
-     * Generate professional summary based on user description
-     */
     @PostMapping("/generate-summary")
     public ResponseEntity<?> generateSummary(
             @RequestBody AiRequest request,
@@ -43,7 +38,10 @@ public class AiController {
                 return ResponseEntity.status(401).body(Map.of("error", "User not found"));
             }
 
-            String summary = aiService.generateSummary(request.getUserInput());
+            // Get language from request, default to English
+            String language = request.getLanguage() != null ? request.getLanguage() : "en";
+
+            String summary = aiService.generateSummary(request.getUserInput(), language);
 
             AiResponse response = AiResponse.builder()
                     .success(true)
@@ -59,9 +57,6 @@ public class AiController {
         }
     }
 
-    /**
-     * Generate experience bullets based on user description
-     */
     @PostMapping("/generate-experience-bullets")
     public ResponseEntity<?> generateExperienceBullets(
             @RequestBody AiRequest request,
@@ -72,9 +67,12 @@ public class AiController {
                 return ResponseEntity.status(401).body(Map.of("error", "User not found"));
             }
 
+            String language = request.getLanguage() != null ? request.getLanguage() : "en";
+
             String bullets = aiService.generateExperienceBullets(
                     request.getUserInput(),
-                    request.getContext()
+                    request.getContext(),
+                    language
             );
 
             AiResponse response = AiResponse.builder()
@@ -91,9 +89,6 @@ public class AiController {
         }
     }
 
-    /**
-     * Generate project bullets based on user description
-     */
     @PostMapping("/generate-project-bullets")
     public ResponseEntity<?> generateProjectBullets(
             @RequestBody AiRequest request,
@@ -104,9 +99,12 @@ public class AiController {
                 return ResponseEntity.status(401).body(Map.of("error", "User not found"));
             }
 
+            String language = request.getLanguage() != null ? request.getLanguage() : "en";
+
             String bullets = aiService.generateProjectBullets(
                     request.getUserInput(),
-                    request.getContext()
+                    request.getContext(),
+                    language
             );
 
             AiResponse response = AiResponse.builder()
