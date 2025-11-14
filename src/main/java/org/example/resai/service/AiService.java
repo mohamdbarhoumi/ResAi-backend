@@ -1,5 +1,6 @@
 package org.example.resai.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -219,4 +220,241 @@ public class AiService {
             throw new RuntimeException("Failed to call OpenAI API: " + e.getMessage());
         }
     }
+
+    public Map<String, Object> tailorResume(Map<String, Object> resumeData, String jobDescription) {
+        try {
+            String prompt = buildTailoringPrompt(resumeData, jobDescription);
+            String response = callOpenAI(prompt, 4000);
+            return parseAIResponse(response, resumeData);
+        } catch (Exception e) {
+            System.err.println("Error tailoring resume: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to tailor resume: " + e.getMessage());
+        }
+    }
+
+    public String generateCoverLetter(Map<String, Object> resumeData, String jobDescription) {
+        try {
+            String prompt = buildCoverLetterPrompt(resumeData, jobDescription);
+            return callOpenAI(prompt, 1500);
+        } catch (Exception e) {
+            System.err.println("Error generating cover letter: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to generate cover letter: " + e.getMessage());
+        }
+    }
+
+    private String buildTailoringPrompt(Map<String, Object> resumeData, String jobDescription) {
+        ObjectMapper mapper = new ObjectMapper();
+        String resumeJson;
+        try {
+            resumeJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(resumeData);
+        } catch (Exception e) {
+            resumeJson = resumeData.toString();
+        }
+
+        return String.format("""
+                THE GOD-LEVEL RESUME TAILORING PROMPT
+                
+                                                                                          You are an elite resume-optimization system. Your job is to rewrite and refine the provided resume only using information already contained in the resume JSON.
+                                                                                          You must tailor it to the job description without adding, inventing, or assuming ANY new skills, experience, achievements, or technologies.
+                
+                                                                                          RESUME (JSON):
+                
+                                                                                          %s
+                
+                                                                                          JOB DESCRIPTION:
+                
+                                                                                          %s
+                
+                                                                                          MISSION RULES (READ CAREFULLY):
+                
+                                                                                          Truth Only:
+                
+                                                                                          You may rewrite existing content for clarity, impact, and alignment.
+                
+                                                                                          You may reorder or rephrase content.
+                
+                                                                                          You may NOT add any skill, tool, technology, responsibility, certification, achievement, or detail that is not explicitly present somewhere in the JSON.
+                
+                                                                                          Summary Optimization:
+                
+                                                                                          Rewrite the professionalSummary to emphasize elements already in the JSON that match the job.
+                
+                                                                                          Do not introduce new skills or claims.
+                
+                                                                                          Experience Optimization:
+                
+                                                                                          Rewrite bullet points using stronger action verbs.
+                
+                                                                                          Emphasize responsibilities and achievements that already exist and align with the job.
+                
+                                                                                          You may combine, condense, or clarify—but never fabricate or infer new work.
+                
+                                                                                          Skills Optimization:
+                
+                                                                                          Reorder and group existing skills to match the job description’s priorities.
+                
+                                                                                          You may only use skills that are already in the JSON.
+                
+                                                                                          You may NOT add missing skills even if the job description requires them.
+                
+                                                                                          Keyword Alignment:
+                
+                                                                                          Insert job-description keywords only when they truthfully match existing content.
+                
+                                                                                          Never force or fabricate alignment.
+                
+                                                                                          Structural Integrity:
+                
+                                                                                          Output MUST be a valid JSON object with the exact same structure, fields, and schema as the input.
+                
+                                                                                          No fields may be added or removed.
+                
+                                                                                          Do not change job titles, companies, dates, or education details.
+                
+                                                                                          OUTPUT FORMAT:
+                
+                                                                                          Return ONLY the optimized JSON.
+                                                                                          No explanations, no commentary, no markdown, no code blocks.
+            """, resumeJson, jobDescription);
+    }
+
+    private String buildCoverLetterPrompt(Map<String, Object> resumeData, String jobDescription) {
+        String fullName = (String) resumeData.getOrDefault("fullName", "");
+        String email = (String) resumeData.getOrDefault("email", "");
+        String phone = (String) resumeData.getOrDefault("phone", "");
+        String professionalSummary = (String) resumeData.getOrDefault("professionalSummary", "");
+
+        // Extract experience if available
+        StringBuilder experienceContext = new StringBuilder();
+        if (resumeData.containsKey("experience")) {
+            Object exp = resumeData.get("experience");
+            if (exp instanceof List) {
+                List<?> experiences = (List<?>) exp;
+                for (Object e : experiences) {
+                    if (e instanceof Map) {
+                        Map<?, ?> expMap = (Map<?, ?>) e;
+                        experienceContext.append("- ")
+                                .append(expMap.get("position"))
+                                .append(" at ")
+                                .append(expMap.get("company"))
+                                .append("\n");
+                    }
+                }
+            }
+        }
+
+        return String.format("""
+            You are a professional cover letter writer. Create a compelling, personalized cover letter.
+            
+            CANDIDATE INFORMATION:
+            Name: %s
+            Email: %s
+            Phone: %s
+            Professional Summary: %s
+            
+            Recent Experience:
+            %s
+            
+            JOB DESCRIPTION:
+            %s
+            
+            INSTRUCTIONS:
+            1. Write a professional cover letter with this structure:
+               - Opening paragraph: Express interest and briefly state why you're a great fit
+               - Body (2 paragraphs): 
+                 * Highlight 2-3 relevant achievements/experiences that match job requirements
+                 * Show understanding of company needs and how you can address them
+               - Closing: Express enthusiasm and call to action
+            
+            2. Style Guidelines:
+               - Professional yet warm and authentic tone
+               - Confident but not arrogant
+               - Specific examples from experience
+               - 300-400 words total
+               - No placeholder company names - use "your organization" or "your team"
+            
+            3. Make it compelling by:
+               - Using concrete examples and achievements
+               - Showing genuine enthusiasm
+               - Demonstrating knowledge of role requirements
+               - Connecting candidate's experience to job needs
+            
+            Return ONLY the cover letter text (no subject line, no address block, just the letter body).
+            Start with "Dear Hiring Manager," and end with "Sincerely,\n%s"
+            """, fullName, email, phone, professionalSummary, experienceContext.toString(), jobDescription, fullName);
+    }
+
+    private String callOpenAI(String prompt, int maxTokens) throws Exception {
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(openAiApiKey);
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", "gpt-4o-mini");
+        requestBody.put("messages", List.of(
+                Map.of("role", "system", "content", "You are a professional resume and career advisor expert."),
+                Map.of("role", "user", "content", prompt)
+        ));
+        requestBody.put("temperature", 0.7);
+        requestBody.put("max_tokens", maxTokens);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(OPENAI_API_URL, entity, Map.class);
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> body = response.getBody();
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) body.get("choices");
+                if (choices != null && !choices.isEmpty()) {
+                    Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+                    return (String) message.get("content");
+                }
+            }
+            throw new RuntimeException("Invalid response from OpenAI");
+        } catch (Exception e) {
+            System.err.println("OpenAI API Error: " + e.getMessage());
+            throw new RuntimeException("Failed to call OpenAI API: " + e.getMessage());
+        }
+    }
+
+    private Map<String, Object> parseAIResponse(String response, Map<String, Object> originalData) {
+        try {
+            // Clean the response
+            String cleanResponse = response.trim();
+
+            // Remove markdown code blocks if present
+            if (cleanResponse.startsWith("```json")) {
+                cleanResponse = cleanResponse.substring(7);
+            } else if (cleanResponse.startsWith("```")) {
+                cleanResponse = cleanResponse.substring(3);
+            }
+
+            if (cleanResponse.endsWith("```")) {
+                cleanResponse = cleanResponse.substring(0, cleanResponse.length() - 3);
+            }
+
+            cleanResponse = cleanResponse.trim();
+
+            // Parse JSON
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> parsedData = mapper.readValue(cleanResponse, new TypeReference<Map<String, Object>>() {});
+
+            System.out.println("Successfully parsed AI response");
+            return parsedData;
+        } catch (Exception e) {
+            System.err.println("Failed to parse AI response: " + e.getMessage());
+            System.err.println("Response was: " + response);
+            // Return original data if parsing fails
+            return originalData;
+        }
+    }
+
+
+
+
 }

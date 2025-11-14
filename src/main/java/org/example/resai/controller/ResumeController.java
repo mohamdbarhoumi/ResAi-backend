@@ -130,6 +130,65 @@ public class ResumeController {
             e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of("error", "Failed to delete resume: " + e.getMessage()));
         }
+
+
+    }
+
+    @PostMapping("/{id}/tailor")
+    public ResponseEntity<?> tailorResume(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> request,
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            User user = getUserFromToken(authHeader);
+            if (user == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "User not found"));
+            }
+
+            String jobDescription = request.get("jobDescription");
+            if (jobDescription == null || jobDescription.trim().isEmpty()) {
+                return ResponseEntity.status(400).body(Map.of("error", "Job description is required"));
+            }
+
+            Resume tailoredResume = resumeService.tailorResume(id, user.getId(), jobDescription);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Resume tailored successfully",
+                    "resume", tailoredResume
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to tailor resume: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/cover-letter")
+    public ResponseEntity<?> generateCoverLetter(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> request,
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            User user = getUserFromToken(authHeader);
+            if (user == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "User not found"));
+            }
+
+            String jobDescription = request.get("jobDescription");
+            if (jobDescription == null || jobDescription.trim().isEmpty()) {
+                return ResponseEntity.status(400).body(Map.of("error", "Job description is required"));
+            }
+
+            String coverLetter = resumeService.generateCoverLetter(id, user.getId(), jobDescription);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "coverLetter", coverLetter
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to generate cover letter: " + e.getMessage()));
+        }
     }
 
 

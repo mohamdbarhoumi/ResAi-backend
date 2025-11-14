@@ -11,6 +11,8 @@ import org.example.resai.repository.ResumeRepo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,8 +23,9 @@ public class ResumeService {
 
     private final ResumeRepo resumeRepo;
     private final ResumeMapper resumeMapper;
+    private final AiService aiService;
 
-    // ===== YOUR EXISTING METHODS (KEEP THESE) =====
+
     public ResumeRes createResume(User user, ResumeReq dto) {
         if (user == null) {
             throw new IllegalArgumentException("Authenticated user cannot be null");
@@ -119,4 +122,56 @@ public class ResumeService {
         resumeRepo.delete(resume.get());
         return true;
     }
+
+
+
+    @Transactional
+    public Resume tailorResume(Long resumeId, Long userId, String jobDescription) {
+        // Find and validate resume
+        Resume resume = resumeRepo.findByIdAndUserId(resumeId, userId)
+                .orElseThrow(() -> new RuntimeException("Resume not found or unauthorized"));
+
+        // Get current resume data
+        Map<String, Object> currentData = resume.getData();
+
+        if (currentData == null || currentData.isEmpty()) {
+            throw new RuntimeException("Resume has no data to tailor");
+        }
+
+        // Call OpenAI to tailor the resume
+        Map<String, Object> tailoredData = aiService.tailorResume(currentData, jobDescription);
+
+        // Update resume with tailored data
+        resume.setData(tailoredData);
+        resume.setVersion(resume.getVersion() + 1);
+        resume.setUpdatedAt(LocalDateTime.now());
+
+        // Optionally store metadata about the tailoring
+        Map<String, Object> metadata = resume.getAiMetadata();
+        if (metadata == null) {
+            metadata = new HashMap<>();
+        }
+        metadata.put("lastTailoredAt", LocalDateTime.now().toString());
+        metadata.put("tailoredFor", jobDescription.substring(0, Math.min(100, jobDescription.length())));
+        resume.setAiMetadata(metadata);
+
+        return resumeRepo.save(resume);
+    }
+
+    public String generateCoverLetter(Long resumeId, Long userId, String jobDescription) {
+        // Find and validate resume
+        Resume resume = resumeRepo.findByIdAndUserId(resumeId, userId)
+                .orElseThrow(() -> new RuntimeException("Resume not found or unauthorized"));
+
+        Map<String, Object> resumeData = resume.getData();
+
+        if (resumeData == null || resumeData.isEmpty()) {
+            throw new RuntimeException("Resume has no data to generate cover letter");
+        }
+
+        // Call OpenAI to generate cover letter
+        return aiService.generateCoverLetter(resumeData, jobDescription);
+    }
+
+
 }
