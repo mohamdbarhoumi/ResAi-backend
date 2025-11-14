@@ -131,4 +131,6 @@ public class ResumeController {
             return ResponseEntity.status(500).body(Map.of("error", "Failed to delete resume: " + e.getMessage()));
         }
     }
+
+
 }
