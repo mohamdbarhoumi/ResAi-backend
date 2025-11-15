@@ -27,7 +27,7 @@ public class UserController {
         this.userRepo = userRepo;
     }
 
-    @PostMapping("/signup")
+    @PostMapping("/create")
     public ResponseEntity<?> signup(@RequestBody SignupReq signupReq) {
         try {
             User savedUser = userService.signup(signupReq);
