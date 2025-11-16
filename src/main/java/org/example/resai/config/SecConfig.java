@@ -21,7 +21,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true) // Enable @PreAuthorize
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
@@ -39,12 +39,19 @@ public class SecConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
-                        .requestMatchers("/api/users/login", "/api/users/signup","/", "/actuator/health").permitAll()
+                        .requestMatchers(
+                                "/",          // root
+                                "/ping",      // Render health-check
+                                "/healthz",
+                                "/actuator/health",
+                                "/api/users/login",
+                                "/api/users/create"
+                        ).permitAll()
 
-                        // Admin endpoints - protected by @PreAuthorize in controller
+                        // Admin endpoints
                         .requestMatchers("/api/admin/**").authenticated()
 
-                        // All other endpoints require authentication
+                        // Everything else requires authentication
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -65,8 +72,15 @@ public class SecConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000","https://resumai-tan.vercel.app"));
-        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+
+        // Allow frontend + backend URLs
+        config.setAllowedOrigins(List.of(
+                "http://localhost:3000",
+                "https://resumai-tan.vercel.app",
+                "https://resai-backend.onrender.com"   // IMPORTANT for Render
+        ));
+
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
