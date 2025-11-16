@@ -27,6 +27,12 @@ public class UserController {
         this.userRepo = userRepo;
     }
 
+
+    @GetMapping("/")
+    public String home() {
+        return "Backend is running!";
+    }
+
     @PostMapping("/create")
     public ResponseEntity<?> signup(@RequestBody SignupReq signupReq) {
         try {
