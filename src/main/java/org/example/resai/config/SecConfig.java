@@ -76,7 +76,7 @@ public class SecConfig {
         // Allow frontend + backend URLs
         config.setAllowedOrigins(List.of(
                 "http://localhost:3000",
-                "https://resumai-tan.vercel.app",
+                "https://res-ai-frontend.vercel.app",
                 "https://resai-backend.onrender.com"   // IMPORTANT for Render
         ));
 
