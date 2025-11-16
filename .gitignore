@@ -79,3 +79,8 @@ build/
 Thumbs.db
 =======
 >>>>>>> c5633a559802cdd7da40a63a27008bf59dc9e067
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
