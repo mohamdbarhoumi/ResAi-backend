@@ -39,7 +39,7 @@ public class SecConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
-                        .requestMatchers("/api/users/login", "/api/users/signup").permitAll()
+                        .requestMatchers("/api/users/login", "/api/users/signup","/", "/actuator/health").permitAll()
 
                         // Admin endpoints - protected by @PreAuthorize in controller
                         .requestMatchers("/api/admin/**").authenticated()
