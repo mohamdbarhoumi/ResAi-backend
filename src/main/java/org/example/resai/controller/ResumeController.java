@@ -138,53 +138,28 @@ public class ResumeController {
     public ResponseEntity<?> tailorResume(
             @PathVariable Long id,
             @RequestBody Map<String, String> request,
-            @AuthenticationPrincipal User user) {  // ← CHANGE THIS LINE
-
-        if (user == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
-        }
-
-        String jobDescription = request.get("jobDescription");
-        if (jobDescription == null || jobDescription.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "jobDescription is required"));
-        }
-
+            @RequestHeader("Authorization") String authHeader) {
         try {
-            Resume tailored = resumeService.tailorResume(id, user.getId(), jobDescription);
+            User user = getUserFromToken(authHeader);
+            if (user == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "User not found"));
+            }
+
+            String jobDescription = request.get("jobDescription");
+            if (jobDescription == null || jobDescription.trim().isEmpty()) {
+                return ResponseEntity.status(400).body(Map.of("error", "Job description is required"));
+            }
+
+            Resume tailoredResume = resumeService.tailorResume(id, user.getId(), jobDescription);
+
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Resume tailored successfully",
-                    "resume", tailored
+                    "resume", tailoredResume
             ));
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500)
-                    .body(Map.of("error", "Tailoring failed: " + e.getMessage()));
-        }
-    }
-
-    @PostMapping("/{id}/cover-letter")
-    public ResponseEntity<?> generateCoverLetter(
-            @PathVariable Long id,
-            @RequestBody Map<String, String> request,
-            @AuthenticationPrincipal User user) {  // ← CHANGE THIS LINE TOO
-
-        if (user == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
-        }
-
-        String jobDescription = request.get("jobDescription");
-        if (jobDescription == null || jobDescription.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "jobDescription is required"));
-        }
-
-        try {
-            String coverLetter = resumeService.generateCoverLetter(id, user.getId(), jobDescription);
-            return ResponseEntity.ok(Map.of("coverLetter", coverLetter));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500)
-                    .body(Map.of("error", "Failed: " + e.getMessage()));
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to tailor resume: " + e.getMessage()));
         }
     }
 
