@@ -9,6 +9,7 @@ import org.example.resai.mapper.ResumeMapper;
 import org.example.resai.model.Resume;
 import org.example.resai.model.User;
 import org.example.resai.repository.ResumeRepo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ResumeService {
 
+    @Autowired
     private final ResumeRepo resumeRepo;
     private final ResumeMapper resumeMapper;
     private final AiService aiService;

@@ -13,11 +13,15 @@ public interface ResumeRepo extends JpaRepository<Resume, Long> {
 
     List<Resume> findByUser(User user);
 
-    List<Resume> findByUser_Id(Long userId);
+    // FIX: explicitly query user.id to avoid Spring trying to resolve "userId" field
+    @Query("SELECT r FROM Resume r WHERE r.user.id = :userId")
+    List<Resume> findByUserId(@Param("userId") Long id);
 
+    // FIX: same correction using explicit JPQL
     @Query("SELECT r FROM Resume r WHERE r.user.id = :userId ORDER BY r.updatedAt DESC")
     List<Resume> findByUserIdOrderByUpdatedAtDesc(@Param("userId") Long userId);
 
+    // FIX: explicitly declare correct JPQL (your method name stays the same)
     @Query("SELECT r FROM Resume r WHERE r.id = :id AND r.user.id = :userId")
-    Optional<Resume> findByIdAndUser_Id(@Param("id") Long id, @Param("userId") Long userId);
+    Optional<Resume> findByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
 }
