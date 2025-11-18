@@ -8,9 +8,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -54,7 +52,10 @@ public class AiService {
             // Call OpenAI with structured output request
             String aiResponse = callOpenAIForStructuredOutput(systemPrompt, userMessage);
             // Parse the JSON response
-            return objectMapper.readValue(aiResponse, Map.class);
+            Map<String, Object> tailoredData = objectMapper.readValue(aiResponse, Map.class);
+            // Validate and enforce structure matches original
+            enforceResumeStructure(resumeData, tailoredData);
+            return tailoredData;
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Failed to tailor resume: " + e.getMessage());
@@ -185,11 +186,14 @@ public class AiService {
                     1. Analyse la description de poste pour identifier les compétences clés, mots-clés et qualifications requises
                     2. Adapte le résumé professionnel pour s'aligner sur le poste
                     3. Réorganise et reformule les points d'expérience pour mettre en évidence les compétences pertinentes
-                    4. Mets en avant les compétences techniques qui correspondent à l'offre
+                    4. Mets en avant les compétences techniques qui correspondent à l'offre, mais NE MODIFIE PAS la section 'skills' si elle existe – garde-la EXACTEMENT telle quelle
                     5. Garde TOUTES les informations factuelles (dates, entreprises, diplômes) EXACTEMENT telles quelles
                     6. Optimise pour les ATS en utilisant les mots-clés de la description de poste
                     7. Maintiens un ton professionnel et des verbes d'action forts
-                    IMPORTANT: Retourne UNIQUEMENT un objet JSON valide avec la structure exacte du CV original. Ne pas ajouter de texte avant ou après le JSON. Pas de markdown, pas d'explication.
+                    IMPORTANT: Retourne UNIQUEMENT un objet JSON valide avec la structure exacte du CV original. 
+                    NE PAS AJOUTER OU SUPPRIMER DE CLÉS DE NIVEAU SUPÉRIEUR (par exemple, si 'skills' n'existe pas dans l'original, ne l'ajoute pas). 
+                    NE PAS MODIFIER LA SECTION 'skills' – copie-la telle quelle de l'original si elle existe.
+                    Ne pas ajouter de texte avant ou après le JSON. Pas de markdown, pas d'explication.
                     """;
         } else {
             return """
@@ -198,11 +202,14 @@ public class AiService {
                     1. Analyze the job description to identify key skills, keywords, and required qualifications
                     2. Tailor the professional summary to align with the target role
                     3. Reorder and rephrase experience bullets to highlight relevant skills
-                    4. Emphasize technical skills that match the job posting
+                    4. Emphasize technical skills that match the job posting, but DO NOT MODIFY the 'skills' section if it exists – keep it EXACTLY as is
                     5. Keep ALL factual information (dates, companies, degrees) EXACTLY as they are
                     6. Optimize for ATS by incorporating keywords from the job description
                     7. Maintain professional tone and strong action verbs
-                    IMPORTANT: Return ONLY a valid JSON object with the exact structure of the original resume. Do not add any text before or after the JSON. No markdown, no explanation.
+                    IMPORTANT: Return ONLY a valid JSON object with the exact structure of the original resume. 
+                    DO NOT ADD OR REMOVE ANY TOP-LEVEL KEYS (e.g., if 'skills' is not in the original, do not add it). 
+                    DO NOT MODIFY THE 'skills' SECTION – copy it as is from the original if it exists.
+                    Do not add any text before or after the JSON. No markdown, no explanation.
                     """;
         }
     }
@@ -389,6 +396,34 @@ public class AiService {
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Failed to call OpenAI API for structured output: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Enforce that tailoredData has the same top-level keys as original resumeData.
+     * Add missing keys with defaults (e.g., empty list for arrays), remove extras.
+     * Special: Always copy 'skills' from original unchanged.
+     */
+    private void enforceResumeStructure(Map<String, Object> original, Map<String, Object> tailored) {
+        Set<String> originalKeys = original.keySet();
+        // Remove any extra keys added by AI
+        tailored.entrySet().removeIf(entry -> !originalKeys.contains(entry.getKey()));
+        // Add back any missing keys with safe defaults
+        for (String key : originalKeys) {
+            if (!tailored.containsKey(key)) {
+                Object originalValue = original.get(key);
+                if (originalValue instanceof List) {
+                    tailored.put(key, new ArrayList<>());  // Empty list for arrays like skills
+                } else if (originalValue instanceof Map) {
+                    tailored.put(key, new HashMap<>());  // Empty map for objects
+                } else {
+                    tailored.put(key, "");  // Default to empty string for scalars
+                }
+            }
+        }
+        // Special handling: Always overwrite 'skills' with original to ensure no changes
+        if (original.containsKey("skills")) {
+            tailored.put("skills", original.get("skills"));
         }
     }
 }
