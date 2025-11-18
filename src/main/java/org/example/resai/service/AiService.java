@@ -391,38 +391,35 @@ public class AiService {
     }
 
     /**
-     * Parse AI response and handle errors
+     * Parse AI response → return ONLY new JSON (no merge)
      */
     private Map<String, Object> parseAIResponse(String response, Map<String, Object> originalData) {
         try {
-            String cleanResponse = response.trim();
+            String clean = response.trim();
 
-            // Remove markdown code blocks if present
-            if (cleanResponse.startsWith("```json")) {
-                cleanResponse = cleanResponse.substring(7);
-            } else if (cleanResponse.startsWith("```")) {
-                cleanResponse = cleanResponse.substring(3);
-            }
-            if (cleanResponse.endsWith("```")) {
-                cleanResponse = cleanResponse.substring(0, cleanResponse.length() - 3);
-            }
-            cleanResponse = cleanResponse.trim();
+            // remove markdown wrappers
+            if (clean.startsWith("```json")) clean = clean.substring(7).trim();
+            else if (clean.startsWith("```")) clean = clean.substring(3).trim();
 
-            // Parse JSON
-            Map<String, Object> parsedData = objectMapper.readValue(cleanResponse, new TypeReference<Map<String, Object>>() {});
+            if (clean.endsWith("```"))
+                clean = clean.substring(0, clean.length() - 3).trim();
 
-            // Merge with original data to preserve all fields
-            Map<String, Object> result = new HashMap<>(originalData);
-            result.putAll(parsedData);
+            // parse JSON returned by AI
+            Map<String, Object> parsed =
+                    objectMapper.readValue(clean, new TypeReference<Map<String, Object>>() {});
 
-            log.info("Successfully parsed and merged AI response");
-            return result;
+            log.info("Successfully parsed AI response");
+
+            // IMPORTANT: DO NOT MERGE, ALWAYS REPLACE
+            return parsed;
+
         } catch (Exception e) {
             log.error("Failed to parse AI response: {}", e.getMessage());
-            log.debug("AI Response was: {}", response);
-            return originalData;
+            log.debug("AI response was: {}", response);
+            return originalData; // fallback
         }
     }
+
 
     /**
      * Helper: Extract brief experience
