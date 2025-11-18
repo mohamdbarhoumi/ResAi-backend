@@ -1,8 +1,10 @@
 package org.example.resai.model;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -14,7 +16,9 @@ import java.util.Map;
 @Table(name = "resumes")
 @AllArgsConstructor
 @NoArgsConstructor
+@DynamicUpdate   // ✅ Critical fix
 public class Resume {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
@@ -35,7 +39,7 @@ public class Resume {
     private Map<String, Object> aiMetadata;
 
     @Column(nullable = false)
-    private int version = 1;
+    private int version = 1; // default only — will NOT be overwritten unless you change it manually
 
     @Column(length = 5)
     private String language = "en";
@@ -53,6 +57,4 @@ public class Resume {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-
-
 }

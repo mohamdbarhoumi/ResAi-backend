@@ -157,8 +157,14 @@ public class ResumeService {
         // Call AI service to tailor the resume WITH LANGUAGE
         Map<String, Object> tailoredData = aiService.tailorResume(currentData, jobDescription, language);
 
-        // Update resume with tailored data
-        resume.setData(tailoredData);
+        // 🔥 FIX: Force Hibernate to detect the change
+        // Set to null first to break the reference
+        resume.setData(null);
+
+        // Create a new HashMap to ensure different object reference
+        Map<String, Object> newData = new HashMap<>(tailoredData);
+        resume.setData(newData);
+
         resume.setVersion(resume.getVersion() + 1);
         resume.setUpdatedAt(LocalDateTime.now());
 
@@ -170,7 +176,11 @@ public class ResumeService {
         metadata.put("lastTailoredAt", LocalDateTime.now().toString());
         metadata.put("tailoredFor", jobDescription.substring(0, Math.min(200, jobDescription.length())) + "...");
         metadata.put("tailoredLanguage", language);
-        resume.setAiMetadata(metadata);
+
+        // 🔥 FIX: Same for metadata to ensure it updates
+        resume.setAiMetadata(null);
+        Map<String, Object> newMetadata = new HashMap<>(metadata);
+        resume.setAiMetadata(newMetadata);
 
         Resume saved = resumeRepo.save(resume);
         log.info("Resume {} tailored successfully in language: {}", resumeId, language);
